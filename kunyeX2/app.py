@@ -29,7 +29,7 @@ class TraxlePrintEngine:
     def __init__(self):
         self.OUTPUT_DIR = "Baskı_Ciktilari"
         os.makedirs(self.OUTPUT_DIR, exist_ok=True)
-        
+
         try:
             pdfmetrics.registerFont(TTFont('Arial', 'C:\\Windows\\Fonts\\arial.ttf'))
             pdfmetrics.registerFont(TTFont('Arial-Bold', 'C:\\Windows\\Fonts\\arialbd.ttf'))
@@ -41,7 +41,7 @@ class TraxlePrintEngine:
 
         self.PAGE_WIDTH = 150 * mm
         self.PAGE_HEIGHT = 120 * mm
-        
+
     def _generate_qr_temp(self, data):
         qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=10, border=0)
         qr.add_data(data)
@@ -55,21 +55,21 @@ class TraxlePrintEngine:
         output_path = os.path.join(self.OUTPUT_DIR, filename)
         c = canvas.Canvas(output_path, pagesize=(self.PAGE_WIDTH, self.PAGE_HEIGHT))
         margin = 5 * mm
-        
+
         # 1. ÜST BÖLÜM
-        qr_size = 22 * mm 
+        qr_size = 22 * mm
         qr_path = self._generate_qr_temp(data_dict.get('kunye_no', 'TRAXLE'))
         c.drawImage(qr_path, self.PAGE_WIDTH - margin - qr_size, self.PAGE_HEIGHT - margin - qr_size, width=qr_size, height=qr_size)
-        
-        c.setFont(self.font_bold, 55) 
+
+        c.setFont(self.font_bold, 55)
         title = data_dict.get('ana_baslik', 'BİBER KAPYA').upper()
         c.drawString(margin, self.PAGE_HEIGHT - margin - 16*mm, title)
 
         # 2. ORTA BÖLÜM
-        mid_y = 66 * mm 
+        mid_y = 66 * mm
         c.setFont(self.font_bold, 65)
         c.drawCentredString(self.PAGE_WIDTH / 2, mid_y - 8*mm, "(KG)")
-        
+
         # LOGOLAR (Dosya varsa basar, yoksa boş bırakır)
         if os.path.exists("mevsiminden.png"):
             c.drawImage("mevsiminden.png", margin, mid_y - 10*mm, width=40*mm, height=15*mm, mask='auto', preserveAspectRatio=True)
@@ -94,10 +94,10 @@ class TraxlePrintEngine:
 
         col_widths = [30*mm, 40*mm, 35*mm, 35*mm]
         t = Table(table_data, colWidths=col_widths, rowHeights=8*mm)
-        
+
         t.setStyle(TableStyle([
             ('FONTNAME', (0,0), (-1,-1), self.font_regular),
-            ('FONTSIZE', (0,0), (-1,-1), 5.5), 
+            ('FONTSIZE', (0,0), (-1,-1), 5.5),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
             ('INNERGRID', (0,0), (-1,-1), 0.5, colors.black),
             ('BOX', (0,0), (-1,-1), 1, colors.black),
@@ -106,7 +106,7 @@ class TraxlePrintEngine:
         ]))
 
         t.wrapOn(c, self.PAGE_WIDTH, self.PAGE_HEIGHT)
-        t.drawOn(c, margin, margin) 
+        t.drawOn(c, margin, margin)
 
         c.save()
         if os.path.exists(qr_path): os.remove(qr_path)
@@ -116,7 +116,7 @@ class TraxlePrintEngine:
 class TraxlePremiumClient(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.overrideredirect(True) 
+        self.overrideredirect(True)
         self.geometry("480x340")
         self.wm_attributes("-transparentcolor", TRANSPARENT_KEY)
         self.configure(fg_color=TRANSPARENT_KEY)
@@ -132,7 +132,7 @@ class TraxlePremiumClient(ctk.CTk):
         self.build_login_elements()
 
         self.after(10, self.set_appwindow)
-        
+
         self.print_engine = TraxlePrintEngine()
 
     def center_window(self, w, h):
@@ -176,14 +176,33 @@ class TraxlePremiumClient(ctk.CTk):
         self.subheader.pack(pady=(0, 20))
 
         self.serial_entry = ctk.CTkEntry(self.main_frame, placeholder_text="XXXX-XXXX-XXXX-XXXX", width=300, height=45, font=ctk.CTkFont(family="Helvetica", size=16, weight="bold"), justify="center", fg_color=SURFACE_COLOR, border_color=SURFACE_COLOR, corner_radius=12, text_color=TEXT_COLOR)
+
+        # Focus glow for activation input
+        def on_focus_in(event):
+            self.serial_entry.configure(border_color=ACCENT_COLOR, border_width=2, fg_color="#3A3A3C")
+        def on_focus_out(event):
+            self.serial_entry.configure(border_color=SURFACE_COLOR, border_width=1, fg_color=SURFACE_COLOR)
+        self.serial_entry.bind("<FocusIn>", on_focus_in)
+        self.serial_entry.bind("<FocusOut>", on_focus_out)
+
         self.serial_entry.pack(pady=10)
         self.serial_entry.bind("<KeyRelease>", self.format_serial)
 
-        self.activate_btn = ctk.CTkButton(self.main_frame, text="DOĞRULA VE BAŞLAT", width=300, height=40, corner_radius=12, fg_color=ACCENT_COLOR, hover_color="#005ea6", font=ctk.CTkFont(family="Helvetica", size=13, weight="bold"), command=self.start_verification)
+        self.activate_btn = ctk.CTkButton(self.main_frame, text="DOĞRULA VE BAŞLAT", width=300, height=40, corner_radius=12, fg_color=ACCENT_COLOR, hover_color="#409CFF", font=ctk.CTkFont(family="Helvetica", size=13, weight="bold"), command=self.start_verification)
+
+        def on_enter(e): self.activate_btn.configure(fg_color="#409CFF")
+        def on_leave(e): self.activate_btn.configure(fg_color=ACCENT_COLOR)
+        def on_press(e): self.activate_btn.configure(fg_color="#005EB8")
+        def on_release(e): self.activate_btn.configure(fg_color="#409CFF")
+        self.activate_btn.bind("<Enter>", on_enter)
+        self.activate_btn.bind("<Leave>", on_leave)
+        self.activate_btn.bind("<Button-1>", on_press)
+        self.activate_btn.bind("<ButtonRelease-1>", on_release)
+
         self.activate_btn.pack(pady=10)
 
         self.status_container = ctk.CTkFrame(self.main_frame, fg_color="transparent", height=50, width=300)
-        self.status_container.pack_propagate(False) 
+        self.status_container.pack_propagate(False)
         self.status_container.pack(pady=5)
 
         self.progress = ctk.CTkProgressBar(self.status_container, width=300, height=4, fg_color=SURFACE_COLOR, progress_color=ACCENT_COLOR)
@@ -223,7 +242,7 @@ class TraxlePremiumClient(ctk.CTk):
         threading.Thread(target=self.crypto_worker, args=(user_input,), daemon=True).start()
 
     def crypto_worker(self, user_input):
-        time.sleep(1.0) 
+        time.sleep(1.0)
         input_hash = hashlib.sha256(user_input.encode()).hexdigest()
         if input_hash == VALID_HASH:
             self.after(0, lambda: self.verification_success())
@@ -231,7 +250,7 @@ class TraxlePremiumClient(ctk.CTk):
             self.after(0, lambda: self.verification_failed())
 
     def verification_failed(self):
-        self.progress.stop(); self.progress.pack_forget() 
+        self.progress.stop(); self.progress.pack_forget()
         self.activate_btn.configure(state="normal", text="DOĞRULA VE BAŞLAT")
         self.serial_entry.configure(state="normal")
         self.show_status("Geçersiz lisans. Lütfen tekrar deneyin.", "#FF4655")
@@ -243,17 +262,17 @@ class TraxlePremiumClient(ctk.CTk):
     # 2. FAZ: ARAYÜZ DEĞİŞİMİ VE VERİ GİRİŞ FORMU
     # ==============================================================
     def verification_success(self):
-        self.progress.stop(); self.progress.set(1); self.progress.configure(progress_color="#00CC66") 
+        self.progress.stop(); self.progress.set(1); self.progress.configure(progress_color="#00CC66")
         self.activate_btn.configure(fg_color="#00CC66", text="ERİŞİM ONAYLANDI")
         self.show_status("Bağlantı güvenli. Sistem başlatılıyor...", "#00CC66")
-        
+
         # 1 saniye sonra giriş ekranını sil ve asıl programa geç
         self.after(1000, self.transition_to_dashboard)
 
     def transition_to_dashboard(self):
         # Eski frame'i tamamen yok et
         self.main_frame.destroy()
-        
+
         # Ekranı formu alacak kadar yumuşakça büyüt
         self.center_window(800, 650)
         self.logo_label.configure(text="TRAXLE IDENTITY | HKS KÜNYE MOTORU")
@@ -268,7 +287,7 @@ class TraxlePremiumClient(ctk.CTk):
 
         # Form Veri Sözlüğü (Input objelerini tutmak için)
         self.form_inputs = {}
-        
+
         # Etiket ve Key listesi
         fields = [
             ("Ana Başlık (Örn: BİBER KAPYA):", "ana_baslik"),
@@ -288,19 +307,30 @@ class TraxlePremiumClient(ctk.CTk):
         # Formu 2 sütun (grid) halinde çizdir
         row = 1
         col = 0
+
+        # Focus glow helpers
+        def add_focus_glow(widget):
+            def on_focus_in(event):
+                widget.configure(border_color=ACCENT_COLOR, border_width=2, fg_color="#3A3A3C")
+            def on_focus_out(event):
+                widget.configure(border_color="gray", border_width=1, fg_color=SURFACE_COLOR)
+            widget.bind("<FocusIn>", on_focus_in)
+            widget.bind("<FocusOut>", on_focus_out)
+
         for label_text, key in fields:
             # Container
             container = ctk.CTkFrame(self.dashboard_frame, fg_color="transparent")
             container.grid(row=row, column=col, padx=10, pady=10, sticky="ew")
-            
+
             # Label
             lbl = ctk.CTkLabel(container, text=label_text, font=ctk.CTkFont(size=12, weight="bold"), text_color="gray")
             lbl.pack(anchor="w")
-            
+
             # Input
-            inp = ctk.CTkEntry(container, width=320, height=35, fg_color=SURFACE_COLOR, border_width=1)
+            inp = ctk.CTkEntry(container, width=320, height=35, corner_radius=8, fg_color=SURFACE_COLOR, border_color="gray", border_width=1)
+            add_focus_glow(inp)
             inp.pack(anchor="w", pady=(2, 0))
-            
+
             self.form_inputs[key] = inp
 
             col += 1
@@ -309,9 +339,19 @@ class TraxlePremiumClient(ctk.CTk):
                 row += 1
 
         # PDF Çıktı Butonu
-        self.print_btn = ctk.CTkButton(self.dashboard_frame, text="PDF ÇIKTISI OLUŞTUR", height=45, fg_color="#00CC66", hover_color="#00994C", font=ctk.CTkFont(size=14, weight="bold"), command=self.generate_pdf)
+        self.print_btn = ctk.CTkButton(self.dashboard_frame, text="PDF ÇIKTISI OLUŞTUR", height=45, corner_radius=12, fg_color="#32D74B", hover_color="#28A745", font=ctk.CTkFont(size=14, weight="bold"), command=self.generate_pdf)
+
+        def pb_enter(e): self.print_btn.configure(fg_color="#28A745")
+        def pb_leave(e): self.print_btn.configure(fg_color="#32D74B")
+        def pb_press(e): self.print_btn.configure(fg_color="#1E7B34")
+        def pb_release(e): self.print_btn.configure(fg_color="#28A745")
+        self.print_btn.bind("<Enter>", pb_enter)
+        self.print_btn.bind("<Leave>", pb_leave)
+        self.print_btn.bind("<Button-1>", pb_press)
+        self.print_btn.bind("<ButtonRelease-1>", pb_release)
+
         self.print_btn.grid(row=row, column=0, columnspan=2, pady=(30, 20))
-        
+
         self.form_status = ctk.CTkLabel(self.dashboard_frame, text="", font=ctk.CTkFont(size=13, weight="bold"))
         self.form_status.grid(row=row+1, column=0, columnspan=2)
 
@@ -319,7 +359,7 @@ class TraxlePremiumClient(ctk.CTk):
         # Butonu kilitle
         self.print_btn.configure(state="disabled", text="PDF OLUŞTURULUYOR...")
         self.form_status.configure(text="")
-        
+
         # Inputlardaki verileri çek
         data_dict = {}
         for key, entry in self.form_inputs.items():
@@ -342,7 +382,7 @@ class TraxlePremiumClient(ctk.CTk):
     def print_success(self, path):
         self.print_btn.configure(state="normal", text="YENİ PDF ÇIKTISI OLUŞTUR")
         self.form_status.configure(text=f"✓ Başarılı! Dosya '{path}' konumuna kaydedildi.", text_color="#00CC66")
-        
+
         # Çıktı alındıktan sonra PDF'i otomatik aç (Windows için)
         try:
             os.startfile(path)
