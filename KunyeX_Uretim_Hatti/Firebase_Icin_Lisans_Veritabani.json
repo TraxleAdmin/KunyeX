@@ -1,0 +1,28 @@
+{
+    "config": {
+        "version": "1.6",
+        "update_url": "https://www.traxleapp.com/guncelleme/KunyeX_Master_Client.exe"
+    },
+    "licenses": {
+        "KUNYEX-PRO-UGL7-6HPE": {
+            "branch": "Merkez",
+            "status": "unused",
+            "hwid": ""
+        },
+        "KUNYEX-PRO-HHC8-NX2X": {
+            "branch": "CIPLAKLI",
+            "status": "unused",
+            "hwid": ""
+        },
+        "KUNYEX-PRO-3TDN-UHRG": {
+            "branch": "DOSEMEALTI",
+            "status": "unused",
+            "hwid": ""
+        },
+        "KUNYEX-PRO-QCG2-1YMO": {
+            "branch": "UNSAL",
+            "status": "unused",
+            "hwid": ""
+        }
+    }
+}
